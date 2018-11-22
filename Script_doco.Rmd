@@ -1,0 +1,354 @@
+---
+title: "Microbiome Exploratory Analysis"
+author: "Christopher Kavazos"
+date: "22 November 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This document will import .biom and .nwk files from QIIME2 and run some basic exploratory analyses to detect changes within bacterial Phyla (at the Order level) for the different samples.
+
+# PREPARATION
+
+The following steps will load the data in two formats. As .biom format to produce frequency histograms and as phyloseq objects to analyse communities
+
+##STEP 1 - LOAD PACKAGES
+
+```{r}
+library(biomformat)
+library(phyloseq)
+library(ggplot2)
+```
+
+##STEP 2 - LOAD SOURCE SCRIPTS
+
+mround will round values to the nearest 5
+
+```{r}
+mround <- function(x,base) {
+  base*round(x/base)
+}
+
+```
+
+##STEP 3 - LOAD DATA
+
+This step loads data as two formats.
+
+First loads data as a biom type using *read_biom*
+
+File 1.1 = Batch 1 sans chloroplasts
+File 1.2 = Batch 1 chloroplasts only
+File 2.1 = Batch 2 sans chloroplasts
+File 2.2 = Batch 2 chloroplasts only
+
+Stored as the list *data*
+
+```{r biom import, message=FALSE, results="hide", warning=FALSE}
+file_path1.1 <- "/home/barefootbushman/Documents/Statistics/Fish data analysis/Batch1.biom"
+file_path1.2 <- "/home/barefootbushman/Documents/Statistics/Fish data analysis/Batch1_chloroplasts.biom"
+file_path2.1 <- "/home/barefootbushman/Documents/Statistics/Fish data analysis/Batch2.biom"
+file_path2.2 <- "/home/barefootbushman/Documents/Statistics/Fish data analysis/Batch2_chloroplasts.biom"
+
+data <- list(read_biom(file_path1.1), read_biom(file_path1.2), 
+             read_biom(file_path2.1), read_biom(file_path2.2))
+data.names <- c("data1.1", "data1.2", "data2.1", "data2.2")
+names(data) <- data.names
+```
+
+The second imports as a phyloseq object. These objects contain the phylogenies (.nwk files)
+
+```{r phyloseq import, message=FALSE, results="hide", warning=FALSE}
+biom_otu1.1 <- import_biom(BIOMfilename = "Batch1.biom", treefilename = "Batch1_tree.nwk")
+biom_otu1.2 <- import_biom(BIOMfilename = "Batch1_chloroplasts.biom", 
+                           treefilename = "Batch1_tree.nwk")
+biom_otu2.1 <- import_biom(BIOMfilename = "Batch2.biom", treefilename = "Batch2_tree.nwk")
+biom_otu2.2 <- import_biom(BIOMfilename = "Batch2_chloroplasts.biom", 
+                           treefilename = "Batch2_tree.nwk")
+
+phy.data <- list(biom_otu1.1, biom_otu1.2, biom_otu2.1, biom_otu2.2)
+names(phy.data) <- data.names
+
+```
+
+##STEP 4 - EXPLORATORY ANALYSIS
+
+The following displays summary information on the total number of taxa and samples for each set of data
+
+````{r}
+
+lapply(phy.data, function(x) x)
+
+```
+
+# OCCURENCE & FREQUENCY ANALYSIS
+
+Extract OTU tables and caluclate basic stats
+
+```{r}
+otu_tables <- lapply(data, function(x) {
+  otu_table <- as.data.frame(as.matrix(biom_data(x)))
+  otu_table <- t(otu_table)
+  return(otu_table)
+})
+
+basic.stats <- lapply(otu_tables, function(x) {
+  no.spe <- ncol(x)
+  no.samp <- nrow(x)
+  maximum <- max(x)
+  zeros <- sum(x==0)
+  zeros_prop <- zeros/(no.spe*no.samp)
+  return(cbind(no.spe, no.samp, maximum, zeros, zeros_prop))
+})
+
+basic.stats
+```
+
+Data is sparse with lots of zero values. Next we generate OTU occurences and relative frequency plots. The four rows of graphs are in the order 1.1, 1.2, 2.1, 2.2
+
+```{r, results='hide'}
+otu.pres <- lapply(otu_tables, function(x){
+  pres <- apply(x > 0, 2, sum)
+  pres <- sort(pres)
+  relf <- 100*pres/nrow(x)
+  relf <- round(sort(relf),1)
+  return(rbind(pres, relf))
+})
+
+par(mfrow=c(1,2))
+
+lapply(otu.pres, function(x){
+  hist(x[1,], main="OTU Occurences", right=FALSE, las=1,
+     xlab="Number of occurrences", ylab="Number of OTUs", 
+     breaks=seq(0, mround(max(x[1,])+5, 5), by=2), 
+     col="bisque")
+
+hist(x[2,], main="OTU Relative Frequencies", right=FALSE, las=1,
+     xlab="Frequency of occurrences (%)", ylab="Number of OTUs",
+     breaks=seq(0, mround(max(x[2,])+5, 5), by=2.5), col="bisque")
+})
+
+dev.off()
+```
+
+#FILTER DATA
+
+This step removes any Phyla marked as unknown. Rank1 = Kingdom, Rank2 = Phyla. First we take a look at which Phyla are present and their abundances. The datases 1.2 and 2.2 should only contain chlosplast taxa from the Phyla Cyanobacteria
+
+```{r}
+
+lapply(phy.data, function(x) table(tax_table(x)[, "Rank2"], exclude = NULL))
+
+```
+
+Next we filter all uncharacterised Phyla
+
+```{r}
+
+phy.filt <- lapply(phy.data, function(x) {
+  a <- subset_taxa(x, !is.na(Rank2) & !Rank2 %in% c("", "uncharacterized"))
+  return(a)
+})
+
+phy.filt = lapply(phy.filt, function(x) subset_taxa(x, !Rank2 %in% "p__"))
+
+lapply(phy.filt, function(x) table(tax_table(x)[, "Rank2"], exclude = NULL))
+
+```
+
+Construct table of prevalance for each taxa. Call *View(prevdf[[1]])* to view the tables.
+
+```{r}
+
+prevdf <- lapply(phy.filt, function(x) {
+  prevdf = apply(X = otu_table(x),
+               MARGIN = ifelse(taxa_are_rows(x), yes = 1, no = 2),
+               FUN = function(x){sum(x > 0)})
+  prevdf = data.frame(Prevalence = prevdf,
+                    TotalAbundance = taxa_sums(x),
+                    tax_table(x))
+  return(prevdf)
+})
+
+```
+
+The following provides a summary of the prevalance of each phyla for the 4 datasets:
+
+```{r}
+
+lapply(prevdf, function(x) return(plyr::ddply(x, "Rank2", function(df1){cbind(mean(df1$Prevalence),sum(df1$Prevalence))})))
+
+```
+
+Filter all taxa present in less than 2.5% of the samples
+
+```{r}
+
+phy.filt <- Map(function(x, y) {
+  prevalenceThreshold <- 0.025*nsamples(x)
+  keepTaxa = rownames(y)[(y$Prevalence >= prevalenceThreshold)]
+  ps2 = prune_taxa(keepTaxa, x)
+  return(ps2)
+}, phy.filt, prevdf)
+
+```
+
+Build prevalence plots showing the most important Phyla for each set of data.
+
+```{r}
+prevdf2 <- Map(function(x, y) {
+  prevdf2 = subset(y, Rank2 %in% get_taxa_unique(x, "Rank2"))
+  return(prevdf2)
+}, phy.filt, prevdf)
+
+prev.plots <- Map(function(x,y){
+  plots <- ggplot(y, aes(TotalAbundance, Prevalence / nsamples(x), color=Rank2)) +
+    geom_hline(yintercept = 0.05, alpha = 0.5, linetype = 2) +  geom_point(size = 2, alpha = 0.7) +
+    scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
+    facet_wrap(~Rank2) + theme(legend.position="none")
+  return(plots)
+}, phy.filt, prevdf2)
+
+lapply(prev.plots, function(x) plot(x))
+```
+
+Normalise all the samples by transforming into relative abundances. Need to discuss issue of rarefaction or DESeq2
+
+```{r}
+ps2ra <- lapply(phy.filt, function(x) transform_sample_counts(x, function(y){y / sum(y)}))
+```
+
+Now we can plot the relative abundances of each order, grouped by Phyla
+
+For Batch1 sans chloroplasts
+
+```{r, warning=FALSE}
+
+plist <- unique(get_taxa_unique(ps2ra[[1]], taxonomic.rank = "Rank2")) 
+lst <- setNames(vector("list", length(plist)), plist)
+
+for (i in plist) {
+  lst[[i]] <- subset_taxa(ps2ra[[1]], Rank2 %in% i)
+}
+
+lst
+
+mphyseq <- lapply(lst, function(x) {
+  mphy <- psmelt(x)
+  mphy <- subset(mphy, Abundance > 0)
+})
+
+plts <- lapply(mphyseq, function (x, Facet = "Rank4", Color = "Rank2"){
+  ggplot(data=x, mapping=aes_string(x = "Species",y = "Abundance",
+                                    color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + scale_y_log10()+
+    theme(legend.position="none")
+})
+
+lapply(plts, function(x) plot(x))
+
+```
+
+Batch1 Chlorplasts
+
+```{r, warning=FALSE}
+
+plist <- unique(get_taxa_unique(ps2ra[[2]], taxonomic.rank = "Rank2")) 
+lst <- setNames(vector("list", length(plist)), plist)
+
+for (i in plist) {
+  lst[[i]] <- subset_taxa(ps2ra[[2]], Rank2 %in% i)
+}
+
+lst
+
+mphyseq <- lapply(lst, function(x) {
+  mphy <- psmelt(x)
+  mphy <- subset(mphy, Abundance > 0)
+})
+
+plts2 <- lapply(mphyseq, function (x, Facet = "Rank4", Color = "Rank2"){
+  ggplot(data=x, mapping=aes_string(x = "Species",y = "Abundance",
+                                    color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + scale_y_log10()+
+    theme(legend.position="none")
+})
+
+lapply(plts2, function(x) plot(x))
+
+```
+
+Catch2 sans chloroplasts
+
+```{r, warning=FALSE}
+
+plist <- unique(get_taxa_unique(ps2ra[[3]], taxonomic.rank = "Rank2")) 
+lst <- setNames(vector("list", length(plist)), plist)
+
+for (i in plist) {
+  lst[[i]] <- subset_taxa(ps2ra[[3]], Rank2 %in% i)
+}
+
+lst
+
+mphyseq <- lapply(lst, function(x) {
+  mphy <- psmelt(x)
+  mphy <- subset(mphy, Abundance > 0)
+})
+
+plts3 <- lapply(mphyseq, function (x, Facet = "Rank4", Color = "Rank2"){
+  ggplot(data=x, mapping=aes_string(x = "Species",y = "Abundance",
+                                    color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + scale_y_log10()+
+    theme(legend.position="none")
+})
+
+lapply(plts3, function(x) plot(x))
+
+```
+
+And Batch2 chloroplasts
+
+```{r, warning=FALSE}
+
+plist <- unique(get_taxa_unique(ps2ra[[4]], taxonomic.rank = "Rank2")) 
+lst <- setNames(vector("list", length(plist)), plist)
+
+for (i in plist) {
+  lst[[i]] <- subset_taxa(ps2ra[[4]], Rank2 %in% i)
+}
+
+lst
+
+mphyseq <- lapply(lst, function(x) {
+  mphy <- psmelt(x)
+  mphy <- subset(mphy, Abundance > 0)
+})
+
+plts4 <- lapply(mphyseq, function (x, Facet = "Rank4", Color = "Rank2"){
+  ggplot(data=x, mapping=aes_string(x = "Species",y = "Abundance",
+                                    color = Color, fill = Color)) +
+    geom_violin(fill = NA) +
+    geom_point(size = 1, alpha = 0.3,
+               position = position_jitter(width = 0.3)) +
+    facet_wrap(facets = Facet) + scale_y_log10()+
+    theme(legend.position="none")
+})
+
+lapply(plts4, function(x) plot(x))
+
+```
