@@ -1,0 +1,557 @@
+###########################################
+# Developed by C Kavazos @ 15/11/2018 
+# ck855@uowmail.edu.au
+#
+# Join Paired End Sequeces for Fish dataset 
+#  of stomaches and intestines
+#
+# Requires QIIME1  & fastq-join
+#  conda install -c bioconda fastq-join
+#
+# extracted_barcodes.sh, 
+#  join_paired_ends.sh and
+#  split_libraries_fastq.sh downloadable
+#  from www.mrdnafreesoftware.com
+#
+# seqs.fna output located in demultiplexed
+#  folder
+#
+##########################################
+
+source activate qiime1
+mkdir Set1
+mkdir Set2
+##########################################
+
+./join_paired_ends.sh
+SAM1-60/SAM1-60_S2_L001_R1_001.fastq.gz
+SAM1-60/SAM1-60_S2_L001_R2_001.fastq.gz
+SAM1-60/joined
+
+./extract_barcodes.sh
+SAM1-60/joined/fastqjoin.join.fastq
+sample-metadata.tsv
+SAM1-60/extracted
+
+gzip SAM1-60/extracted/barcodes.fastq
+gzip SAM1-60/extracted/reads.fastq
+mv SAM1-60/extracted/reads.fastq.gz SAM1-60/extracted/sequences.fastq.gz
+rm SAM1-60/extracted/barcodes_not_oriented.fastq
+rm SAM1-60/extracted/reads1_not_oriented.fastq
+rm SAM1-60/extracted/reads2_not_oriented.fastq
+
+source deactivate qiime1
+
+source activate qiime2-2018.11
+
+qiime tools import \
+  --type EMPSingleEndSequences \
+  --input-path SAM1-60/extracted \
+  --output-path Set1/SAM1-60.qza
+
+qiime demux emp-single \
+  --i-seqs Set1/SAM1-60.qza \
+  --m-barcodes-file sample-metadata.tsv \
+  --m-barcodes-column BarcodeSequence \
+  --o-per-sample-sequences Set1/SAM1-60_demux.qza
+
+qiime demux summarize \
+  --i-data Set1/SAM1-60_demux.qza \
+  --o-visualization Set1/SAM1-60_demux.qzv
+
+qiime tools view Set1/SAM1-60_demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs Set1/SAM1-60_demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 450 \
+  --o-representative-sequences Set1/SAM1-60_rep-seqs.qza \
+  --o-table Set1/SAM1-60_table.qza \
+  --o-denoising-stats Set1/SAM1-60_denoising-stats.qza
+
+qiime feature-table filter-samples \
+  --i-table Set1/SAM1-60_table.qza \
+  --p-min-frequency 30 \
+  --o-filtered-table Set1/SAM1-60_table.qza
+ 
+
+##########################################
+
+./join_paired_ends.sh
+SAM61-120/SAM61-120_S3_L001_R1_001.fastq.gz
+SAM61-120/SAM61-120_S3_L001_R2_001.fastq.gz
+SAM61-120/joined
+
+./extract_barcodes.sh
+SAM61-120/joined/fastqjoin.join.fastq
+sample-metadata.tsv
+SAM61-120/extracted
+
+gzip SAM61-120/extracted/barcodes.fastq
+gzip SAM61-120/extracted/reads.fastq
+mv SAM61-120/extracted/reads.fastq.gz SAM61-120/extracted/sequences.fastq.gz
+rm SAM61-120/extracted/barcodes_not_oriented.fastq
+rm SAM61-120/extracted/reads1_not_oriented.fastq
+rm SAM61-120/extracted/reads2_not_oriented.fastq
+
+source deactivate qiime1
+
+source activate qiime2-2018.11
+
+qiime tools import \
+  --type EMPSingleEndSequences \
+  --input-path SAM61-120/extracted \
+  --output-path Set1/SAM61-120.qza
+
+qiime demux emp-single \
+  --i-seqs Set1/SAM61-120.qza \
+  --m-barcodes-file sample-metadata.tsv \
+  --m-barcodes-column BarcodeSequence \
+  --o-per-sample-sequences Set1/SAM61-120_demux.qza
+
+qiime demux summarize \
+  --i-data Set1/SAM61-120_demux.qza \
+  --o-visualization Set1/SAM61-120_demux.qzv
+
+qiime tools view Set1/SAM61-120_demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs Set1/SAM61-120_demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 450 \
+  --o-representative-sequences Set1/SAM61-120_rep-seqs.qza \
+  --o-table Set1/SAM61-120_table.qza \
+  --o-denoising-stats Set1/SAM61-120_denoising-stats.qza
+
+qiime feature-table filter-samples \
+  --i-table Set1/SAM61-120_table.qza \
+  --p-min-frequency 30 \
+  --o-filtered-table Set1/SAM61-120_table.qza
+
+##########################################
+
+./join_paired_ends.sh
+SAM121-172/SAM121-172_S1_L001_R1_001.fastq.gz
+SAM121-172/SAM121-172_S1_L001_R2_001.fastq.gz
+SAM121-172/joined
+
+./extract_barcodes.sh
+SAM121-172/joined/fastqjoin.join.fastq
+sample-metadata.tsv
+SAM121-172/extracted
+
+gzip SAM121-172/extracted/barcodes.fastq
+gzip SAM121-172/extracted/reads.fastq
+mv SAM121-172/extracted/reads.fastq.gz SAM121-172/extracted/sequences.fastq.gz
+rm SAM121-172/extracted/barcodes_not_oriented.fastq
+rm SAM121-172/extracted/reads1_not_oriented.fastq
+rm SAM121-172/extracted/reads2_not_oriented.fastq
+
+source deactivate qiime1
+
+source activate qiime2-2018.11
+
+qiime tools import \
+  --type EMPSingleEndSequences \
+  --input-path SAM121-172/extracted \
+  --output-path Set2/SAM121-172.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM121-172_demux.qza \
+  --o-visualization Set2/SAM121-172_demux.qzv
+
+qiime tools view Set2/SAM121-172_demux.qzv
+
+qiime demux emp-single \
+  --i-seqs Set2/SAM121-172.qza \
+  --m-barcodes-file sample-metadata.tsv \
+  --m-barcodes-column BarcodeSequence \
+  --o-per-sample-sequences Set2/SAM121-172_demux.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM121-172_demux.qza \
+  --o-visualization Set2/SAM121-172_demux.qzv
+
+qiime tools view Set2/SAM121-172_demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs Set2/SAM121-172_demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 450 \
+  --o-representative-sequences Set2/SAM121-172_rep-seqs.qza \
+  --o-table Set2/SAM121-172_table.qza \
+  --o-denoising-stats Set2/SAM121-172_denoising-stats.qza
+
+qiime feature-table filter-samples \
+  --i-table Set2/SAM121-172_table.qza \
+  --p-min-frequency 30 \
+  --o-filtered-table Set2/SAM121-172_table.qza
+##########################################
+
+./join_paired_ends.sh
+SAM173-224/SAM173-224_S2_L001_R1_001.fastq.gz
+SAM173-224/SAM173-224_S2_L001_R2_001.fastq.gz
+SAM173-224/joined
+
+./extract_barcodes.sh
+SAM173-224/joined/fastqjoin.join.fastq
+sample-metadata.tsv
+SAM173-224/extracted
+
+gzip SAM173-224/extracted/barcodes.fastq
+gzip SAM173-224/extracted/reads.fastq
+mv SAM173-224/extracted/reads.fastq.gz SAM173-224/extracted/sequences.fastq.gz
+rm SAM173-224/extracted/barcodes_not_oriented.fastq
+rm SAM173-224/extracted/reads1_not_oriented.fastq
+rm SAM173-224/extracted/reads2_not_oriented.fastq
+
+source deactivate qiime1
+
+source activate qiime2-2018.11
+
+qiime tools import \
+  --type EMPSingleEndSequences \
+  --input-path SAM173-224/extracted \
+  --output-path Set2/SAM173-224.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM173-224_demux.qza \
+  --o-visualization Set2/SAM173-224_demux.qzv
+
+qiime tools view Set2/SAM173-224_demux.qzv
+
+qiime demux emp-single \
+  --i-seqs Set2/SAM173-224.qza \
+  --m-barcodes-file sample-metadata.tsv \
+  --m-barcodes-column BarcodeSequence \
+  --o-per-sample-sequences Set2/SAM173-224_demux.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM173-224_demux.qza \
+  --o-visualization Set2/SAM173-224_demux.qzv
+
+qiime tools view Set2/SAM173-224_demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs Set2/SAM173-224_demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 450 \
+  --o-representative-sequences Set2/SAM173-224_rep-seqs.qza \
+  --o-table Set2/SAM173-224_table.qza \
+  --o-denoising-stats Set2/SAM173-224_denoising-stats.qza
+
+qiime feature-table filter-samples \
+  --i-table Set2/SAM173-224_table.qza \
+  --p-min-frequency 30 \
+  --o-filtered-table Set2/SAM173-224_table.qza
+##########################################
+
+./join_paired_ends.sh
+SAM225-276/SAM225-276_S3_L001_R1_001.fastq.gz
+SAM225-276/SAM225-276_S3_L001_R2_001.fastq.gz
+SAM225-276/joined
+
+./extract_barcodes.sh
+SAM225-276/joined/fastqjoin.join.fastq
+sample-metadata.tsv
+SAM225-276/extracted
+
+gzip SAM225-276/extracted/barcodes.fastq
+gzip SAM225-276/extracted/reads.fastq
+mv SAM225-276/extracted/reads.fastq.gz SAM225-276/extracted/sequences.fastq.gz
+rm SAM225-276/extracted/barcodes_not_oriented.fastq
+rm SAM225-276/extracted/reads1_not_oriented.fastq
+rm SAM225-276/extracted/reads2_not_oriented.fastq
+
+source deactivate qiime1
+
+################################################################################
+
+source activate qiime2-2018.11
+
+qiime tools import \
+  --type EMPSingleEndSequences \
+  --input-path SAM225-276/extracted \
+  --output-path Set2/SAM225-276.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM225-276_demux.qza \
+  --o-visualization Set2/SAM225-276_demux.qzv
+
+qiime tools view Set2/SAM225-276_demux.qzv
+
+qiime demux emp-single \
+  --i-seqs Set2/SAM225-276.qza \
+  --m-barcodes-file sample-metadata.tsv \
+  --m-barcodes-column BarcodeSequence \
+  --o-per-sample-sequences Set2/SAM225-276_demux.qza
+
+qiime demux summarize \
+  --i-data Set2/SAM225-276_demux.qza \
+  --o-visualization Set2/SAM225-276_demux.qzv
+
+qiime tools view Set2/SAM225-276_demux.qzv
+
+qiime dada2 denoise-single \
+  --i-demultiplexed-seqs Set2/SAM225-276_demux.qza \
+  --p-trim-left 0 \
+  --p-trunc-len 450 \
+  --o-representative-sequences Set2/SAM225-276_rep-seqs.qza \
+  --o-table Set2/SAM225-276_table.qza \
+  --o-denoising-stats Set2/SAM225-276_denoising-stats.qza
+
+qiime feature-table filter-samples \
+  --i-table Set2/SAM225-276_table.qza \
+  --p-min-frequency 30 \
+  --o-filtered-table Set2/SAM225-276_table.qza
+
+####################################################################################
+####################################################################################
+qiime tools import \
+  --type 'FeatureData[Sequence]' \
+  --input-path Classifier/gg_13_8_otus/rep_set/99_otus.fasta \
+  --output-path Classifier/99_otus.qza
+
+qiime tools import \
+  --type 'FeatureData[Taxonomy]' \
+  --input-format HeaderlessTSVTaxonomyFormat \
+  --input-path Classifier/gg_13_8_otus/taxonomy/99_otu_taxonomy.txt \
+  --output-path Classifier/ref-taxonomy.qza
+
+qiime feature-classifier extract-reads \
+  --i-sequences Classifier/99_otus.qza \
+  --p-f-primer AGRGTTTGATCMTGGCTCAG \
+  --p-r-primer GGTTACCTTGTTACGACTT \
+  --p-trunc-len 450 \
+  --o-reads Classifier/ref-seqs.qza
+
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads Classifier/ref-seqs.qza \
+  --i-reference-taxonomy Classifier/ref-taxonomy.qza \
+  --o-classifier Classifier/classifier.qza
+
+################################################################
+
+mkdir Batch1
+
+qiime feature-table merge \
+  --i-tables Set1/SAM1-60_table.qza \
+  --i-tables Set1/SAM61-120_table.qza \
+  --o-merged-table Batch1/table.qza
+
+qiime feature-table merge-seqs \
+  --i-data Set1/SAM1-60_rep-seqs.qza \
+  --i-data Set1/SAM61-120_rep-seqs.qza \
+  --o-merged-data Batch1/rep-seqs.qza
+
+qiime feature-table summarize \
+  --i-table Batch1/table.qza \
+  --o-visualization Batch1/table.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime feature-table tabulate-seqs \
+  --i-data Batch1/rep-seqs.qza \
+  --o-visualization Batch1/rep-seqs.qzv
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences Batch1/rep-seqs.qza \
+  --o-alignment Batch1/aligned-rep-seqs.qza \
+  --o-masked-alignment Batch1/masked-aligned-rep-seqs.qza \
+  --o-tree Batch1/unrooted-tree.qza \
+  --o-rooted-tree Batch1/rooted-tree.qza
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny Batch1/rooted-tree.qza \
+  --i-table Batch1/table.qza \
+  --p-sampling-depth 5000 \
+  --m-metadata-file sample-metadata.tsv \
+  --output-dir Batch1/core-metrics-results
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier Classifier/classifier.qza \
+  --i-reads Batch1/rep-seqs.qza \
+  --o-classification Batch1/taxonomy.qza
+
+qiime metadata tabulate \
+  --m-input-file Batch1/taxonomy.qza \
+  --o-visualization Batch1/taxonomy.qzv
+
+qiime taxa barplot \
+  --i-table Batch1/table.qza \
+  --i-taxonomy Batch1/taxonomy.qza \
+  --m-metadata-file sample-metadata.tsv \
+  --o-visualization Batch1/taxa-bar-plots.qzv
+
+#Export as .biom with metadata
+
+qiime tools export \
+  --input-path Batch1/taxonomy.qza \
+  --output-path Batch1/taxonomy-exported
+# Change headers to #OTUID taxonomy confidence
+cp Batch1/taxonomy-exported/taxonomy.tsv Batch1/taxonomy-exported/biom-taxonomy.tsv
+
+
+qiime taxa filter-table \
+  --i-table Batch1/table.qza \
+  --i-taxonomy Batch1/taxonomy.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table Batch1/feature-table-sans-chloroplasts.qza
+
+qiime feature-table summarize \
+  --i-table Batch1/feature-table-sans-chloroplasts.qza \
+  --o-visualization Batch1/feature-table-sans-chloroplasts.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch1/feature-table-sans-chloroplasts.qza \
+  --output-path Batch1/feature-table-sans-chloroplasts
+
+biom add-metadata \
+  -i Batch1/feature-table-sans-chloroplasts/feature-table.biom \
+  -o Batch1/feature-table-sans-chloroplasts/table-metadata-taxonomy.biom \
+  --observation-metadata-fp Batch1/taxonomy-exported/biom-taxonomy.tsv \
+  --sample-metadata-fp sample-metadata.tsv
+
+
+qiime taxa filter-table \
+  --i-table Batch1/table.qza \
+  --i-taxonomy Batch1/taxonomy.qza \
+  --p-include chloroplast \
+  --o-filtered-table Batch1/feature-table-chloroplasts.qza
+
+qiime feature-table summarize \
+  --i-table Batch1/feature-table-chloroplasts.qza \
+  --o-visualization Batch1/feature-table-chloroplasts.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch1/feature-table-chloroplasts.qza \
+  --output-path Batch1/feature-table-chloroplasts
+
+biom add-metadata \
+  -i Batch1/feature-table-chloroplasts/feature-table.biom \
+  -o Batch1/feature-table-chloroplasts/table-metadata-taxonomy.biom \
+  --observation-metadata-fp Batch1/taxonomy-exported/biom-taxonomy.tsv \
+  --sample-metadata-fp sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch1/rooted-tree.qza \
+  --output-path Batch1/exported-tree
+
+####################################################
+
+mkdir Batch2
+
+#Remove sample Pmol113.2
+qiime feature-table filter-samples \
+  --i-table Set2/SAM225-276_table.qza \
+  --m-metadata-file Set2/samples-to-keep.tsv \
+  --o-filtered-table Set2/SAM225-276_sans_Pmol113-2.qza
+
+qiime feature-table merge \
+  --i-tables Set2/SAM121-172_table.qza \
+  --i-tables Set2/SAM173-224_table.qza \
+  --i-tables Set2/SAM225-276_sans_Pmol113-2.qza \
+  --o-merged-table Batch2/table.qza
+
+qiime feature-table merge-seqs \
+  --i-data Set2/SAM121-172_rep-seqs.qza \
+  --i-data Set2/SAM173-224_rep-seqs.qza \
+  --i-data Set2/SAM225-276_rep-seqs.qza \
+  --o-merged-data Batch2/rep-seqs.qza
+
+qiime feature-table summarize \
+  --i-table Batch2/table.qza \
+  --o-visualization Batch2/table.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime feature-table tabulate-seqs \
+  --i-data Batch2/rep-seqs.qza \
+  --o-visualization Batch2/rep-seqs.qzv
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences Batch2/rep-seqs.qza \
+  --o-alignment Batch2/aligned-rep-seqs.qza \
+  --o-masked-alignment Batch2/masked-aligned-rep-seqs.qza \
+  --o-tree Batch2/unrooted-tree.qza \
+  --o-rooted-tree Batch2/rooted-tree.qza
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny Batch2/rooted-tree.qza \
+  --i-table Batch2/table.qza \
+  --p-sampling-depth 4500 \
+  --m-metadata-file sample-metadata.tsv \
+  --output-dir Batch2/core-metrics-results
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier Classifier/classifier.qza \
+  --i-reads Batch2/rep-seqs.qza \
+  --o-classification Batch2/taxonomy.qza
+
+qiime metadata tabulate \
+  --m-input-file Batch2/taxonomy.qza \
+  --o-visualization Batch2/taxonomy.qzv
+
+qiime taxa barplot \
+  --i-table Batch2/table.qza \
+  --i-taxonomy Batch2/taxonomy.qza \
+  --m-metadata-file sample-metadata.tsv \
+  --o-visualization Batch2/taxa-bar-plots.qzv
+
+#Export as .biom with metadata
+
+qiime tools export \
+  --input-path Batch2/taxonomy.qza \
+  --output-path Batch2/taxonomy-exported
+# Change headers to #OTUID taxonomy confidence
+cp Batch2/taxonomy-exported/taxonomy.tsv Batch2/taxonomy-exported/biom-taxonomy.tsv
+
+
+qiime taxa filter-table \
+  --i-table Batch2/table.qza \
+  --i-taxonomy Batch2/taxonomy.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table Batch2/feature-table-sans-chloroplasts.qza
+
+qiime feature-table summarize \
+  --i-table Batch2/feature-table-sans-chloroplasts.qza \
+  --o-visualization Batch2/feature-table-sans-chloroplasts.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch2/feature-table-sans-chloroplasts.qza \
+  --output-path Batch2/feature-table-sans-chloroplasts
+
+biom add-metadata \
+  -i Batch2/feature-table-sans-chloroplasts/feature-table.biom \
+  -o Batch2/feature-table-sans-chloroplasts/table-metadata-taxonomy.biom \
+  --observation-metadata-fp Batch2/taxonomy-exported/biom-taxonomy.tsv \
+  --sample-metadata-fp sample-metadata.tsv
+
+
+qiime taxa filter-table \
+  --i-table Batch2/table.qza \
+  --i-taxonomy Batch2/taxonomy.qza \
+  --p-include chloroplast \
+  --o-filtered-table Batch2/feature-table-chloroplasts.qza
+
+qiime feature-table summarize \
+  --i-table Batch2/feature-table-chloroplasts.qza \
+  --o-visualization Batch2/feature-table-chloroplasts.qzv \
+  --m-sample-metadata-file sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch2/feature-table-chloroplasts.qza \
+  --output-path Batch2/feature-table-chloroplasts
+
+biom add-metadata \
+  -i Batch2/feature-table-chloroplasts/feature-table.biom \
+  -o Batch2/feature-table-chloroplasts/table-metadata-taxonomy.biom \
+  --observation-metadata-fp Batch2/taxonomy-exported/biom-taxonomy.tsv \
+  --sample-metadata-fp sample-metadata.tsv
+
+qiime tools export \
+  --input-path Batch2/rooted-tree.qza \
+  --output-path Batch2/exported-tree
+
+
